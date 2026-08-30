@@ -5,7 +5,7 @@ async fn production_read_models_are_bounded_and_empty_safe(pool: sqlx::PgPool) {
     let repository = WebRepository::new(pool.clone());
     let dashboard = repository.dashboard().await.unwrap();
     assert_eq!(dashboard["high_priority"].as_array().unwrap().len(), 0);
-    assert_eq!(dashboard["live_feed"].as_array().unwrap().len(), 0);
+    assert!(dashboard.get("live_feed").is_none());
 
     let page = repository
         .tokens(&TokenListQuery {
