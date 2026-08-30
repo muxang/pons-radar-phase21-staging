@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 const css = readFileSync(new URL('./style.css', import.meta.url), 'utf8');
 const pages = readFileSync(new URL('./pages.tsx', import.meta.url), 'utf8');
+const components = readFileSync(new URL('./components.tsx', import.meta.url), 'utf8');
 
 describe('production design system', () => {
   it('defines the legible slate palette, typography, and responsive application shell', () => {
@@ -35,7 +36,8 @@ describe('production design system', () => {
   });
 
   it('uses scan-friendly token controls and icon-labelled table columns', () => {
-    expect(pages).toContain('class={`filter-chip ${smart ? \'active\' : \'\'}`}');
+    expect(pages).toContain('class="smart-filter"');
+    expect(pages.match(/type="checkbox"/g)?.length).toBeGreaterThanOrEqual(1);
     expect(pages).toContain('class="th-label"');
     expect(css).toContain('.token-toolbar{');
     expect(css).toContain('.progress-track{');
@@ -45,5 +47,6 @@ describe('production design system', () => {
     expect(pages).toContain('class="token-hero"');
     expect(pages).toContain('class="overview-layout"');
     expect(pages).toContain('class="social-button"');
+    expect(components).toContain('token.logo_uri');
   });
 });

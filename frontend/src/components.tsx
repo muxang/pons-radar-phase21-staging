@@ -16,8 +16,8 @@ export function ExternalLink({ value, label }: { value: unknown; label: string }
 
 export function Icon({ name }: { name: string }) { return <span class={`ui-icon icon-${name}`} aria-hidden="true" />; }
 export function TokenAvatar({ token, size = 'normal' }: { token: Record<string, unknown>; size?: 'normal' | 'large' }) {
-  const symbol = String(token.symbol ?? '?').trim();
-  return <span class={`token-avatar ${size}`} aria-hidden="true"><b>{symbol.slice(0, 2).toUpperCase()}</b></span>;
+  const logo = safeExternalUrl(token.logo_uri);
+  return <span class={`token-avatar ${size}`} aria-hidden="true"><Icon name="token" />{logo && <img src={logo} alt="" loading="lazy" referrerpolicy="no-referrer" onError={(event) => { event.currentTarget.hidden = true; }} />}</span>;
 }
 
 export function TokenCard({ token }: { token: Record<string, unknown> }) {

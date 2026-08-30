@@ -1654,7 +1654,7 @@ checksum = "b4596b6d070b27117e987119b4dac604f3c58cfb0b191112e24771b2faeac1a6"
 
 [[package]]
 name = "pons-chain"
-version = "0.1.13"
+version = "0.1.15"
 dependencies = [
  "alloy-primitives",
  "async-trait",
@@ -1675,7 +1675,7 @@ dependencies = [
 
 [[package]]
 name = "pons-domain"
-version = "0.1.13"
+version = "0.1.15"
 dependencies = [
  "alloy-primitives",
  "rust_decimal",
@@ -1685,7 +1685,7 @@ dependencies = [
 
 [[package]]
 name = "pons-radar"
-version = "0.1.14"
+version = "0.1.15"
 dependencies = [
  "anyhow",
  "argon2",
@@ -1727,7 +1727,7 @@ dependencies = [
 
 [[package]]
 name = "pons-storage"
-version = "0.1.13"
+version = "0.1.15"
 dependencies = [
  "alloy-primitives",
  "chrono",
@@ -1744,7 +1744,7 @@ dependencies = [
 
 [[package]]
 name = "pons-updater"
-version = "0.1.13"
+version = "0.1.15"
 dependencies = [
  "anyhow",
  "base64",
@@ -1769,7 +1769,7 @@ dependencies = [
 
 [[package]]
 name = "pons-v2"
-version = "0.1.13"
+version = "0.1.15"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
