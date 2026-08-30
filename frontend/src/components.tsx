@@ -11,7 +11,7 @@ export function AsyncPanel<T>({ state, empty = 'No data', children }: { state: {
 
 export function Badge({ children, tone = 'neutral' }: { children: ComponentChildren; tone?: string }) { return <span class={`badge ${tone}`}>{children}</span>; }
 export function Metric({ label, value, evidence }: { label: string; value: unknown; evidence?: string }) { return <div class="metric"><span>{label}</span><strong>{displayDecimal(value)}</strong>{evidence && <small>{evidence}</small>}</div>; }
-export function Address({ value }: { value: unknown }) { const text = String(value ?? ''); return <button class="copy" title={text} onClick={() => void navigator.clipboard?.writeText(text)}>{short(text, 7)}</button>; }
+export function Address({ value }: { value: unknown }) { const text = String(value ?? ''); return <button type="button" class="copy" title={`Copy ${text}`} aria-label={`Copy address ${text}`} onClick={() => void navigator.clipboard?.writeText(text)}>{short(text, 7)}</button>; }
 export function ExternalLink({ value, label }: { value: unknown; label: string }) { const safe = safeExternalUrl(value); return safe ? <a href={safe} target="_blank" rel="noopener noreferrer">{label}</a> : <span class="unsafe" title={String(value ?? '')}>{value ? `${label} (unsafe URL)` : `${label}: unavailable`}</span>; }
 
 export function TokenCard({ token }: { token: Record<string, unknown> }) {

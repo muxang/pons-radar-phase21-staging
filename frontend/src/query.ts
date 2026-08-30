@@ -40,8 +40,6 @@ function flushRealtimeInvalidations() {
   if (scopes.has('tokens')) void queryClient.invalidateQueries({ queryKey: ['tokens'] });
 }
 
-export function flushRealtimeInvalidationsForTest() { flushRealtimeInvalidations(); }
-
 export function invalidateForEvent(type: string, data: unknown) {
   const payload = data && typeof data === 'object' ? data as Record<string, unknown> : {};
   pendingScopes.add('dashboard');

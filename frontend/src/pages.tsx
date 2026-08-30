@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { api, displayDecimal, safeExternalUrl, short } from './api';
 import { aiResearchViewModel, type AiResearchResponse } from './research';
 import { modeLabel, sampleLabel } from './backtests';
@@ -12,6 +12,15 @@ import { compareBuilds, type BuildIdentity, useUnsavedChanges } from './upgrade'
 
 type Obj = Record<string, unknown>;
 type List<T = Obj> = { items: T[]; total?: number; next_offset?: number | null; next_before?: string | null };
+
+export function useDebouncedValue<T>(value: T, delayMs = 350) {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebounced(value), delayMs);
+    return () => window.clearTimeout(timer);
+  }, [value, delayMs]);
+  return debounced;
+}
 
 export function DashboardPage() {
   const state = useQuery<Obj>(['dashboard'], () => api('/dashboard'));
@@ -29,9 +38,10 @@ function Feed({ items = [] }: { items?: Obj[] }) { return items.length ? <div cl
 
 export function TokensPage() {
   const [search, setSearch] = useState(''); const [signal, setSignal] = useState(''); const [smart, setSmart] = useState(false); const [offset, setOffset] = useState(0); const limit = 50;
-  const query = new URLSearchParams({ limit: String(limit), offset: String(offset), sort: 'launch_time', descending: 'true' }); if (search) query.set('search', search); if (signal) query.set('signal', signal); if (smart) query.set('has_smart_money', 'true');
-  const state = useQuery<List>(['tokens', search, signal, smart, offset], () => api(`/tokens?${query}`));
-  return <Page title="Tokens" subtitle="Paginated durable token, market and signal read model"><div class="filters"><input aria-label="Search tokens" placeholder="Symbol, name or address" value={search} onInput={(e) => { setSearch(e.currentTarget.value); setOffset(0); }} /><select aria-label="Signal state" value={signal} onChange={(e) => { setSignal(e.currentTarget.value); setOffset(0); }}><option value="">All signal states</option>{['HIGH_PRIORITY', 'STRONG_WATCH', 'WATCH', 'COOLING', 'DISTRIBUTION', 'NO_SIGNAL'].map((v) => <option>{v}</option>)}</select><label><input type="checkbox" checked={smart} onChange={(e) => setSmart(e.currentTarget.checked)} /> Has Smart Money</label></div><AsyncPanel state={state}>{(data) => <><div class="table-wrap"><table><thead><tr><th>Token</th><th>Age</th><th>Curve</th><th>Buyers / Sellers</th><th>Holders</th><th>User flow</th><th>Smart</th><th>Signal</th></tr></thead><tbody>{data.items.map((t) => <tr key={String(t.id)}><td><Link href={`/tokens/${t.address}`}><strong>{String(t.symbol ?? 'Unknown')}</strong><small>{String(t.name ?? short(t.address))}</small></Link></td><td>{age(t.launch_time)}</td><td>{displayDecimal(t.curve_progress)}<small>{String(t.state_scope ?? 'UNAVAILABLE')}</small></td><td>{String(t.unique_buyers)} / {String(t.unique_sellers)}</td><td>{String(t.holders)}</td><td>{displayDecimal(t.user_net_flow_raw)}</td><td>{String(t.smart_buyers)}<small>{displayDecimal(t.smart_net_flow_raw)}</small></td><td><Badge tone={String(t.signal_state).toLowerCase()}>{String(t.signal_state)}</Badge><small>{displayDecimal(t.score)} / {displayDecimal(t.confidence)}</small></td></tr>)}</tbody></table></div><Pager offset={offset} limit={limit} total={data.total ?? 0} setOffset={setOffset} /></>}</AsyncPanel></Page>;
+  const debouncedSearch = useDebouncedValue(search.trim());
+  const query = new URLSearchParams({ limit: String(limit), offset: String(offset), sort: 'launch_time', descending: 'true' }); if (debouncedSearch) query.set('search', debouncedSearch); if (signal) query.set('signal', signal); if (smart) query.set('has_smart_money', 'true');
+  const state = useQuery<List>(['tokens', debouncedSearch, signal, smart, offset], () => api(`/tokens?${query}`));
+  return <Page title="Tokens" subtitle="Paginated durable token, market and signal read model"><div class="filters"><input aria-label="Search tokens" placeholder="Symbol, name or address" value={search} onInput={(e) => { setSearch(e.currentTarget.value); setOffset(0); }} /><select aria-label="Signal state" value={signal} onChange={(e) => { setSignal(e.currentTarget.value); setOffset(0); }}><option value="">All signal states</option>{['HIGH_PRIORITY', 'STRONG_WATCH', 'WATCH', 'COOLING', 'DISTRIBUTION', 'NO_SIGNAL'].map((v) => <option key={v}>{v.replaceAll('_', ' ')}</option>)}</select><label><input type="checkbox" checked={smart} onChange={(e) => setSmart(e.currentTarget.checked)} /> Has Smart Money</label>{(search || signal || smart) && <button type="button" onClick={() => { setSearch(''); setSignal(''); setSmart(false); setOffset(0); }}>Clear filters</button>}</div><AsyncPanel state={state}>{(data) => <><div class="results-summary" aria-live="polite"><span><strong>{String(data.total ?? data.items.length)}</strong> matching tokens</span><Badge tone="live">WSS synced · REST authoritative</Badge></div><div class="table-wrap"><table><caption class="sr-only">Pons V2 token market and signal state</caption><thead><tr><th>Token</th><th>Age</th><th>Curve</th><th>Buyers / Sellers</th><th>Holders</th><th>User flow</th><th>Smart</th><th>Signal</th></tr></thead><tbody>{data.items.map((t) => <tr key={String(t.id)} class={`signal-row ${String(t.signal_state ?? 'NO_SIGNAL').toLowerCase()}`}><td><Link href={`/tokens/${t.address}`}><strong>{String(t.symbol ?? 'Unknown')}</strong><small>{String(t.name ?? short(t.address))}</small></Link></td><td>{age(t.launch_time)}</td><td>{displayDecimal(t.curve_progress)}<small>{String(t.state_scope ?? 'UNAVAILABLE')}</small></td><td>{String(t.unique_buyers)} / {String(t.unique_sellers)}</td><td>{String(t.holders)}</td><td>{displayDecimal(t.user_net_flow_raw)}</td><td>{String(t.smart_buyers)}<small>Net {displayDecimal(t.smart_net_flow_raw)}</small></td><td><Badge tone={String(t.signal_state).toLowerCase()}>{String(t.signal_state).replaceAll('_', ' ')}</Badge><small>Score {displayDecimal(t.score)} · Confidence {displayDecimal(t.confidence)}</small></td></tr>)}</tbody></table></div><Pager offset={offset} limit={limit} total={data.total ?? 0} setOffset={setOffset} /></>}</AsyncPanel></Page>;
 }
 
 export function TokenPage({ address, tab = 'overview' }: { address: string; tab?: string }) {

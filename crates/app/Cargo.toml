@@ -28,7 +28,7 @@ sha2 = "0.10"
 rand = "0.8"
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 semver = "1"
-rust_decimal = "1.38"
+rust_decimal = { version = "1.38", default-features = false, features = ["serde"] }
 subtle = "2.6"
 thiserror = "2.0"
 sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "postgres"] }

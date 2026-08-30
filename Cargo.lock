@@ -1081,9 +1081,9 @@ dependencies = [
 
 [[package]]
 name = "hyper"
-version = "1.11.0"
+version = "1.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d22053281f852e11534f5198498373cbb59295120a20771d90f7ed1897490a72"
+checksum = "27b501faa50e7a26c3d3560ca625132f4078a17771f4810baf70475ae48cbe43"
 dependencies = [
  "atomic-waker",
  "bytes",
@@ -1269,9 +1269,9 @@ dependencies = [
 
 [[package]]
 name = "indexmap"
-version = "2.14.0"
+version = "2.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d466e9454f08e4a911e14806c24e16fba1b4c121d1ea474396f396069cf949d9"
+checksum = "07aa2048142242915a31d35844fb311e0e53fcca590c3a0a40dcf1b841fa09eb"
 dependencies = [
  "equivalent",
  "hashbrown 0.17.1",
@@ -1654,7 +1654,7 @@ checksum = "b4596b6d070b27117e987119b4dac604f3c58cfb0b191112e24771b2faeac1a6"
 
 [[package]]
 name = "pons-chain"
-version = "0.1.8"
+version = "0.1.10"
 dependencies = [
  "alloy-primitives",
  "async-trait",
@@ -1675,7 +1675,7 @@ dependencies = [
 
 [[package]]
 name = "pons-domain"
-version = "0.1.8"
+version = "0.1.10"
 dependencies = [
  "alloy-primitives",
  "rust_decimal",
@@ -1685,7 +1685,7 @@ dependencies = [
 
 [[package]]
 name = "pons-radar"
-version = "0.1.11"
+version = "0.1.12"
 dependencies = [
  "anyhow",
  "argon2",
@@ -1727,7 +1727,7 @@ dependencies = [
 
 [[package]]
 name = "pons-storage"
-version = "0.1.8"
+version = "0.1.10"
 dependencies = [
  "alloy-primitives",
  "chrono",
@@ -1744,7 +1744,7 @@ dependencies = [
 
 [[package]]
 name = "pons-updater"
-version = "0.1.8"
+version = "0.1.10"
 dependencies = [
  "anyhow",
  "base64",
@@ -1769,7 +1769,7 @@ dependencies = [
 
 [[package]]
 name = "pons-v2"
-version = "0.1.8"
+version = "0.1.10"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",

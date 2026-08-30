@@ -11,7 +11,7 @@ alloy-sol-types = { version = "1.7", default-features = false }
 async-trait = "0.1"
 chrono = { version = "0.4", features = ["serde"] }
 num-bigint = "0.4"
-rust_decimal = { version = "1.37", features = ["serde-with-str"] }
+rust_decimal = { version = "1.37", default-features = false, features = ["serde-with-str"] }
 pons-chain = { path = "../chain" }
 pons-domain = { path = "../domain" }
 pons-storage = { path = "../storage" }
