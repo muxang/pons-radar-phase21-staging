@@ -1,0 +1,90 @@
+name: Signed release
+on:
+  push:
+    tags: ['v[0-9]+.[0-9]+.[0-9]+']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_PASSWORD: postgres, POSTGRES_DB: pons_radar_test }
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/pons_radar_test
+      FRONTEND_BUILD_ID: ${{ github.sha }}
+      VITE_FRONTEND_BUILD_ID: ${{ github.sha }}
+      VITE_APP_VERSION: ${{ github.ref_name }}
+      VITE_API_SCHEMA_VERSION: 1
+      PONS_RELEASE_TRUST_ROOT_ID: ${{ vars.RELEASE_TRUST_ROOT_ID }}
+      PONS_RELEASE_TRUST_ROOT_HEX: ${{ vars.RELEASE_TRUST_ROOT_HEX }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate compiled release trust root
+        shell: bash
+        run: |
+          test -n "$PONS_RELEASE_TRUST_ROOT_ID"
+          test "${#PONS_RELEASE_TRUST_ROOT_HEX}" = 64
+      - uses: dtolnay/rust-toolchain@stable
+        with: { components: rustfmt, clippy }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: frontend/package-lock.json }
+      - run: npm ci
+        working-directory: frontend
+      - run: npm run typecheck && npm test && npm run build
+        working-directory: frontend
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --workspace --all-targets -- -D warnings
+      - run: cargo test --workspace
+      - name: Verify tag and package binaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          test "$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[]|select(.name=="pons-radar")|.version')" = "$version"
+          cargo build --workspace --release
+          mkdir -p release/package
+          install -m 0755 target/release/pons-radar release/package/pons-radar
+          install -m 0755 target/release/pons-radar-updater release/package/pons-radar-updater
+          printf '%s\n' "$version" > release/package/VERSION
+          tar -C release/package -czf release/pons-radar-linux-x86_64.tar.gz pons-radar pons-radar-updater VERSION
+      - name: Generate and sign manifest
+        env:
+          RELEASE_SIGNING_PRIVATE_KEY_B64: ${{ secrets.RELEASE_SIGNING_PRIVATE_KEY_B64 }}
+          RELEASE_SIGNING_KEY_ID: ${{ vars.RELEASE_SIGNING_KEY_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$RELEASE_SIGNING_PRIVATE_KEY_B64"
+          test -n "$RELEASE_SIGNING_KEY_ID"
+          test -n "$PONS_RELEASE_TRUST_ROOT_ID"
+          test -n "$PONS_RELEASE_TRUST_ROOT_HEX"
+          test "$RELEASE_SIGNING_KEY_ID" = "$PONS_RELEASE_TRUST_ROOT_ID"
+          asset=release/pons-radar-linux-x86_64.tar.gz
+          size=$(stat -c '%s' "$asset")
+          hash=$(sha256sum "$asset" | cut -d' ' -f1)
+          version="${GITHUB_REF_NAME#v}"
+          db_schema="$(find migrations -maxdepth 1 -type f -name '*.sql' -printf '%f\n' | sort | tail -1 | cut -d_ -f1 | sed 's/^0*//')"
+          test -n "$db_schema"
+          jq -n --arg version "$version" --arg now "$(date -u +%FT%TZ)" --arg sha "$GITHUB_SHA" --arg build "$FRONTEND_BUILD_ID" --arg key "$RELEASE_SIGNING_KEY_ID" --arg hash "$hash" --argjson size "$size" --argjson db_schema "$db_schema" '{manifest_version:1,app_version:$version,channel:"stable",published_at:$now,git_commit:$sha,build_timestamp:$now,frontend_build_id:$build,api_schema_version:1,min_db_schema:$db_schema,max_db_schema:$db_schema,target_db_schema:$db_schema,rollback_safe:true,old_binary_compatible_with_target_schema:true,assets:[{platform:"linux",architecture:"x86_64",filename:"pons-radar-linux-x86_64.tar.gz",size:$size,sha256:$hash}],release_notes:("https://github.com/"+env.GITHUB_REPOSITORY+"/releases/tag/"+env.GITHUB_REF_NAME),signing_key_id:$key}' > release/release-manifest.json
+          printf '%s' "$RELEASE_SIGNING_PRIVATE_KEY_B64" | base64 -d > "$RUNNER_TEMP/release-signing-key.pem"
+          chmod 600 "$RUNNER_TEMP/release-signing-key.pem"
+          derived_public=$(openssl pkey -in "$RUNNER_TEMP/release-signing-key.pem" -pubout -outform DER | tail -c 32 | xxd -p -c 64)
+          test "$derived_public" = "${PONS_RELEASE_TRUST_ROOT_HEX,,}"
+          openssl pkeyutl -sign -rawin -inkey "$RUNNER_TEMP/release-signing-key.pem" -in release/release-manifest.json | base64 -w0 > release/release-manifest.sig
+          sha256sum "$asset" release/release-manifest.json release/release-manifest.sig > release/SHA256SUMS
+          rm -f "$RUNNER_TEMP/release-signing-key.pem"
+      - uses: softprops/action-gh-release@v2
+        with:
+          draft: false
+          prerelease: false
+          files: |
+            release/pons-radar-linux-x86_64.tar.gz
+            release/release-manifest.json
+            release/release-manifest.sig
+            release/SHA256SUMS

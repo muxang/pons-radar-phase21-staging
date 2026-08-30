@@ -1,0 +1,4 @@
+export interface UpdateTrustState { signature?: string; schema_compatible?: boolean; rollback_compatible?: boolean; install_allowed?: boolean }
+export function canInstallUpdate(value: UpdateTrustState | undefined, active: boolean): boolean { return Boolean(value?.signature === 'VALID' && value.schema_compatible && value.rollback_compatible && value.install_allowed && !active); }
+export function rollbackWarning(value: UpdateTrustState | undefined): string | null { return value && !value.rollback_compatible ? 'Binary rollback cannot safely cross this database migration.' : null; }
+export const updateProgressLabel = (state: unknown) => ({ DOWNLOADING:'Downloading',VERIFYING:'Verifying',STAGED:'Staged',INSTALLING:'Installing',RESTARTING:'Restarting',VERIFYING_HEALTH:'Health Check' }[String(state)] ?? String(state ?? 'Idle'));

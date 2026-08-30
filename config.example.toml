@@ -1,0 +1,199 @@
+# pons-radar example configuration
+# Secrets belong in environment variables.
+
+[app]
+bind = "0.0.0.0:3000"
+environment = "production"
+data_dir = "./data"
+log_level = "info"
+
+[build]
+api_schema_version = 1
+
+[frontend_update]
+auto_refresh_read_only_pages = true
+auto_refresh_countdown_seconds = 10
+block_auto_refresh_when_unsaved = true
+
+[database]
+max_connections = 10
+acquire_timeout_seconds = 5
+
+[chain]
+chain_id = 4663
+confirmations = 1
+backfill_chunk_blocks = 1000
+ws_reconnect_min_ms = 1000
+ws_reconnect_max_ms = 30000
+rpc_http_env = "RH_RPC_HTTP_URL"
+rpc_ws_env = "RH_RPC_WS_URL"
+
+[indexer]
+max_processing_concurrency = 32
+raw_logs_enabled = true
+
+[metadata]
+concurrency = 4
+rpc_timeout_seconds = 10
+poll_interval_ms = 500
+retry_min_seconds = 5
+retry_max_seconds = 300
+historical_attempts_before_fallback = 3
+
+# Seed only. Runtime Deployment Registry is authoritative and must verify it.
+[[pons_v2.deployments]]
+id = "pons-v2-current"
+address = "0x7eD598BcEf8bd9Edd8C97A195C6d13f40801EC7e"
+start_block = 0
+enabled = false
+source = "docs.ponsfamily.com/v2"
+
+[wallet_intelligence]
+minimum_identity_confidence = "0.90"
+include_buy_strong_in_signal = false
+include_sell_strong_in_signal = false
+
+[confirmation]
+concurrency = 4
+rpc_timeout_seconds = 10
+poll_interval_ms = 250
+retry_min_seconds = 2
+retry_max_seconds = 300
+
+[identity_classification]
+concurrency = 2
+batch_size = 500
+poll_interval_ms = 500
+retry_min_seconds = 2
+retry_max_seconds = 300
+
+[positions]
+concurrency = 2
+poll_interval_ms = 250
+retry_min_seconds = 2
+retry_max_seconds = 300
+
+[market_worker]
+concurrency = 2
+poll_interval_ms = 500
+retry_min_seconds = 2
+retry_max_seconds = 300
+
+[market]
+snapshot_intervals_seconds = [30, 60, 180, 300, 900, 1800, 3600]
+
+[signals]
+concurrency = 2
+poll_interval_ms = 500
+retry_min_seconds = 2
+retry_max_seconds = 300
+rule_version = 1
+weight_version = 1
+calculation_version = 1
+
+[realtime]
+poll_interval_ms = 100
+heartbeat_interval_seconds = 15
+client_queue_capacity = 256
+replay_limit_max = 500
+
+[signals.weights]
+smart_wallet = 45
+pons_momentum = 25
+capital_flow = 15
+holder_distribution = 10
+research_narrative = 5
+
+[signals.thresholds]
+watch = 45
+strong_watch = 65
+high_priority = 80
+cooling_exit_ratio = "0.40"
+
+[signals.consensus]
+windows_seconds = [30, 60, 180, 300, 900]
+minimum_independent_buyers = 2
+minimum_qualified_buyers = 2
+minimum_identity_confidence = "0.90"
+
+[signals.timing]
+first_minute = "1.00"
+three_minutes = "0.90"
+five_minutes = "0.75"
+fifteen_minutes = "0.60"
+later = "0.40"
+
+[signals.tier_weights]
+s = "1.25"
+a = "1.10"
+b = "1.00"
+c = "0.85"
+unranked = "0.90"
+
+[alerts]
+web_enabled = true
+default_sound_enabled = true
+default_voice_enabled = false
+default_desktop_notifications_enabled = false
+cooldown_seconds = 30
+
+[alerts.voice]
+speak_strong_watch = true
+speak_high_priority = true
+speak_wallet_close = true
+speak_distribution = true
+speak_system_update = true
+
+[websocket]
+heartbeat_seconds = 15
+max_reconnect_seconds = 30
+replay_enabled = true
+
+[research]
+external_enrichment_enabled = false
+metadata_recheck_seconds = 300
+
+[ai]
+enabled = false
+provider = "DISABLED"
+model = "none"
+max_concurrency = 1
+requests_per_minute = 10
+timeout_seconds = 30
+poll_interval_ms = 500
+retry_min_seconds = 5
+retry_max_seconds = 300
+max_attempts = 3
+max_input_bytes = 262144
+max_output_bytes = 65536
+minimum_signal_score = 65
+minimum_smart_buyers = 2
+minimum_refresh_interval_seconds = 900
+use_ai_research_in_signal = false
+# Provider API keys are accepted only from environment variables, never this file.
+
+[updater]
+enabled = false
+channel = "stable"
+github_owner = "YOUR_GITHUB_USER"
+github_repo = "pons-radar"
+check_interval_seconds = 21600
+auto_check = true
+auto_install = false
+request_timeout_seconds = 120
+max_manifest_bytes = 262144
+max_asset_bytes = 268435456
+service_name = "pons-radar.service"
+health_base_url = "http://127.0.0.1:3000"
+# Optional deployment-level public-key pins extend the roots compiled into the binary.
+# Protect this production config as root-owned and service-read-only (root:root, 0640 or stricter).
+# Neither the Web Admin API nor the updater writes this configuration. A duplicate built-in
+# key_id with different key material fails startup. Never source keys from a release/manifest.
+# [[updater.deployment_pinned_trusted_keys]]
+# key_id = "release-2026"
+# public_key_hex = "64-lowercase-hex-characters"
+
+[security]
+session_cookie_secure = true
+session_hours = 8
+allowed_origin = "https://pons-radar.example.com"

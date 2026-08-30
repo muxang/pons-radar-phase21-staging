@@ -1,0 +1,7 @@
+.upgrade-overlay{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:20px;background:#030508d9;backdrop-filter:blur(12px) saturate(80%)}
+.upgrade-modal{position:relative;width:min(620px,100%);padding:28px;overflow:hidden;border:1px solid #f5bd6259;border-radius:16px;background:linear-gradient(145deg,#141820,#0c0f14);box-shadow:0 32px 120px #000b}
+.upgrade-modal:before{content:"";position:absolute;inset:0 0 auto;height:1px;background:linear-gradient(90deg,transparent,var(--amber),transparent)}
+.upgrade-modal.critical{border-color:#ff737d66}.upgrade-modal.critical:before{background:linear-gradient(90deg,transparent,var(--red),transparent)}
+.upgrade-modal h2{margin:17px 0 6px;font-size:24px;letter-spacing:-.035em}.upgrade-modal>p{color:var(--muted);font-size:11px}
+.upgrade-modal dl{margin:20px 0}.upgrade-modal dl>div{display:grid;grid-template-columns:90px minmax(0,1fr);padding:9px 4px;border-bottom:1px solid var(--soft)}.upgrade-modal dt{color:var(--muted);font-size:9px;text-transform:uppercase}.upgrade-modal dd{margin:0;color:var(--text2);font:500 10px var(--mono);overflow-wrap:anywhere}
+.modal-actions{display:flex;gap:8px;margin-top:19px}.modal-actions button:first-child:not(:disabled){border-color:#54d7f452;background:var(--cyan-soft);color:#c4f6ff}.modal-actions .danger{border-color:#ff737d66;color:#ff9da4}

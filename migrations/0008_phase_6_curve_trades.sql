@@ -1,0 +1,52 @@
+CREATE TABLE token_trades (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    chain_id uint64_numeric NOT NULL,
+    token_id UUID NOT NULL REFERENCES tokens(id),
+    token_address evm_address NOT NULL,
+    curve_address evm_address NOT NULL,
+    event_type TEXT NOT NULL CHECK (event_type IN ('PONS_V2_CURVE_BUY','PONS_V2_CURVE_SELL')),
+    side TEXT NOT NULL CHECK (side IN ('BUY','SELL')),
+    actor evm_address NOT NULL,
+    recipient evm_address NOT NULL,
+    quote_amount_raw uint256_text NOT NULL,
+    token_amount_raw uint256_text NOT NULL,
+    fee_raw uint256_text NOT NULL,
+    tax_raw uint256_text NOT NULL,
+    block_number uint64_numeric NOT NULL,
+    block_hash evm_hash NOT NULL,
+    tx_hash evm_hash NOT NULL,
+    transaction_index uint64_numeric,
+    log_index uint64_numeric NOT NULL,
+    block_time TIMESTAMPTZ NOT NULL,
+    raw_log_id UUID NOT NULL REFERENCES raw_chain_logs(id),
+    normalized_event_id BYTEA NOT NULL CHECK (octet_length(normalized_event_id)=32),
+    status TEXT NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING','CONFIRMED','ORPHANED')),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (chain_id,tx_hash,log_index,event_type),
+    UNIQUE (raw_log_id,event_type),
+    UNIQUE (normalized_event_id)
+);
+CREATE INDEX token_trades_token_time_idx ON token_trades(token_id,block_number,log_index);
+CREATE INDEX token_trades_curve_time_idx ON token_trades(chain_id,curve_address,block_number);
+
+CREATE TABLE curve_accounting_events (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    chain_id uint64_numeric NOT NULL,
+    token_id UUID NOT NULL REFERENCES tokens(id),
+    curve_address evm_address NOT NULL,
+    event_type TEXT NOT NULL CHECK (event_type='PONS_V2_CURVE_BUY_REFUNDED'),
+    actor evm_address NOT NULL,
+    amount_raw uint256_text NOT NULL,
+    block_number uint64_numeric NOT NULL,
+    block_hash evm_hash NOT NULL,
+    tx_hash evm_hash NOT NULL,
+    transaction_index uint64_numeric,
+    log_index uint64_numeric NOT NULL,
+    block_time TIMESTAMPTZ NOT NULL,
+    raw_log_id UUID NOT NULL REFERENCES raw_chain_logs(id),
+    normalized_event_id BYTEA NOT NULL CHECK (octet_length(normalized_event_id)=32),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE(chain_id,tx_hash,log_index,event_type),
+    UNIQUE(raw_log_id,event_type),
+    UNIQUE(normalized_event_id)
+);

@@ -1,0 +1,11 @@
+// Install as /etc/polkit-1/rules.d/90-pons-radar-updater.rules, root:root 0644.
+// It permits only the pons-radar service account to restart its own unit. It
+// does not grant a shell, arbitrary unit control, or configuration writes.
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.freedesktop.systemd1.manage-units" &&
+        subject.user == "pons-radar" &&
+        action.lookup("unit") == "pons-radar.service" &&
+        action.lookup("verb") == "restart") {
+        return polkit.Result.YES;
+    }
+});

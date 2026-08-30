@@ -1,0 +1,16 @@
+[workspace]
+members = ["crates/app", "crates/chain", "crates/domain", "crates/pons_v2", "crates/storage", "crates/updater"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.10"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+rust-version = "1.85"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }

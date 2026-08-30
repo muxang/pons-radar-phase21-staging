@@ -1,0 +1,26 @@
+import type { EventEnvelope } from './realtime';
+
+export interface AlertItem { id:string; type:string; severity:string; title:string; message:string; speech_text?:string|null; payload?:Record<string,unknown>; realtime_alert_eligible:boolean; provisional:boolean; chain_finality?:string|null; event_effective_at:string; classification_source?:string|null; status:string; target_reference?:string|null; }
+export interface AlertPreferences { sound_enabled:boolean; voice_enabled:boolean; desktop_notifications_enabled:boolean; speak_strong:boolean; speak_high_priority:boolean; speak_wallet_close:boolean; speak_distribution:boolean; speak_system_update:boolean; smart_buy_alerts:boolean; provisional_alerts:boolean; minimum_signal_score:string; minimum_smart_trade_amount:string|null; }
+
+export const shouldDeliver = (alert:AlertItem,p:AlertPreferences,permission:NotificationPermission) => {const score=Number(alert.payload?.score??0);const amount=alert.payload?.quote_amount_raw;const policy=(alert.type!=='SMART_BUY'||p.smart_buy_alerts)&&(!alert.type.startsWith('SIGNAL_')||score>=Number(p.minimum_signal_score))&&(p.minimum_smart_trade_amount===null||amount===undefined||BigInt(String(amount))>=BigInt(p.minimum_smart_trade_amount));const active=alert.realtime_alert_eligible&&alert.status==='ACTIVE'&&policy&&(p.provisional_alerts||!alert.provisional);return{toast:alert.realtime_alert_eligible&&(active||alert.status==='RETRACTED'),sound:active&&p.sound_enabled,voice:active&&p.voice_enabled&&!!alert.speech_text&&((alert.type==='SIGNAL_STRONG'&&p.speak_strong)||(alert.type==='SIGNAL_HIGH_PRIORITY'&&p.speak_high_priority)||(alert.type==='SMART_POSITION_CLOSE'&&p.speak_wallet_close)||(alert.type==='SIGNAL_DISTRIBUTION'&&p.speak_distribution)||(alert.type==='SYSTEM_UPDATE'&&p.speak_system_update)),desktop:active&&p.desktop_notifications_enabled&&permission==='granted'}};
+export function claimUpgradeAnnouncement(buildId:string,leader:boolean,storage:Storage=localStorage){const key=`pons.upgrade_announced.${buildId}`;if(!leader||storage.getItem(key))return false;storage.setItem(key,new Date().toISOString());return true}
+
+export class AlertLeader {
+ private readonly id=crypto.randomUUID(); private timer?:number; private leader=false;
+ constructor(private readonly storage:Storage=localStorage,private readonly now=()=>Date.now()){}
+ start(){this.tick();this.timer=window.setInterval(()=>this.tick(),1000)}
+ tick(){const raw=this.storage.getItem('pons.alert_leader');const current=raw?JSON.parse(raw) as {id:string;expires:number}:null;if(!current||current.expires<this.now()||current.id===this.id){this.storage.setItem('pons.alert_leader',JSON.stringify({id:this.id,expires:this.now()+2500}));}const chosen=JSON.parse(this.storage.getItem('pons.alert_leader')??'null') as {id:string}|null;this.leader=chosen?.id===this.id;return this.leader}
+ isLeader(){return this.leader}
+ stop(){if(this.timer)clearInterval(this.timer);const current=JSON.parse(this.storage.getItem('pons.alert_leader')??'null') as {id:string}|null;if(current?.id===this.id)this.storage.removeItem('pons.alert_leader');this.leader=false}
+}
+
+export class AlertDelivery {
+ private enabled=false;private audio?:AudioContext;private readonly spoken=new Set<string>();
+ constructor(private readonly leader:AlertLeader,private preferences:AlertPreferences,private readonly toast:(a:AlertItem)=>void){}
+ setPreferences(v:AlertPreferences){this.preferences=v}
+ async enable(){this.enabled=true;this.audio=new AudioContext();await this.audio.resume();if(this.preferences.desktop_notifications_enabled&&Notification.permission==='default')await Notification.requestPermission()}
+ announceUpgrade(buildId:string){if(!this.enabled||!claimUpgradeAnnouncement(buildId,this.leader.isLeader()))return false;if(this.preferences.sound_enabled)this.sound('HIGH');if(this.preferences.voice_enabled&&this.preferences.speak_system_update)speechSynthesis.speak(new SpeechSynthesisUtterance('系统升级已经完成，请刷新页面。'));if(this.preferences.desktop_notifications_enabled&&Notification.permission==='granted')new Notification('系统升级已经完成',{body:'当前页面仍运行旧版前端，需要刷新。',tag:`pons.upgrade_announced.${buildId}`});return true}
+ consume(event:EventEnvelope){if(!event.type.startsWith('alert.'))return;const alert=event.data as AlertItem;if(this.spoken.has(alert.id)&&alert.status!=='RETRACTED')return;const actions=shouldDeliver(alert,this.preferences,Notification.permission);if(actions.toast)this.toast(alert);if(!this.enabled||!this.leader.isLeader())return;if(actions.sound)this.sound(alert.severity);if(actions.voice&&alert.speech_text){speechSynthesis.speak(new SpeechSynthesisUtterance(alert.speech_text))}if(actions.desktop){const n=new Notification(alert.title,{body:alert.message,tag:alert.id});n.onclick=()=>{window.focus();if(alert.target_reference)location.assign(alert.target_reference)}}this.spoken.add(alert.id)}
+ private sound(severity:string){if(!this.audio)return;const oscillator=this.audio.createOscillator();const gain=this.audio.createGain();oscillator.frequency.value=severity==='HIGH'||severity==='CRITICAL'?880:severity==='STRONG'?660:440;gain.gain.value=.08;oscillator.connect(gain).connect(this.audio.destination);oscillator.start();oscillator.stop(this.audio.currentTime+.12)}
+}

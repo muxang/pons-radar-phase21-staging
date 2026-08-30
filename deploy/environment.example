@@ -1,0 +1,11 @@
+# Install as /etc/pons-radar/environment, owned root:pons-radar and mode 0640.
+# Values below are placeholders. Never commit the populated file.
+DATABASE_URL=postgres://pons_radar:REPLACE_ME@127.0.0.1:5432/pons_radar
+RH_RPC_HTTP_URL=https://REPLACE_WITH_AUTHORIZED_ROBINHOOD_HTTP_RPC
+RH_RPC_WS_URL=wss://REPLACE_WITH_AUTHORIZED_ROBINHOOD_WSS_RPC
+ADMIN_SETUP_TOKEN=REPLACE_WITH_AT_LEAST_32_RANDOM_CHARACTERS
+RUST_LOG=info
+# Public GitHub repositories do not need this. For a private repository use a
+# read-only fine-grained credential injected by the deployment secret manager.
+# GITHUB_TOKEN=REPLACE_WITH_READ_ONLY_TOKEN
+# AI remains disabled in Phase 21 and does not participate in production Signal.
