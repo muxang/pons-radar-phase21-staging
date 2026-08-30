@@ -14,11 +14,17 @@ export function Metric({ label, value, evidence }: { label: string; value: unkno
 export function Address({ value }: { value: unknown }) { const text = String(value ?? ''); return <button type="button" class="copy" title={`Copy ${text}`} aria-label={`Copy address ${text}`} onClick={() => void navigator.clipboard?.writeText(text)}>{short(text, 7)}</button>; }
 export function ExternalLink({ value, label }: { value: unknown; label: string }) { const safe = safeExternalUrl(value); return safe ? <a href={safe} target="_blank" rel="noopener noreferrer">{label}</a> : <span class="unsafe" title={String(value ?? '')}>{value ? `${label} (unsafe URL)` : `${label}: unavailable`}</span>; }
 
+export function Icon({ name }: { name: string }) { return <span class={`ui-icon icon-${name}`} aria-hidden="true" />; }
+export function TokenAvatar({ token, size = 'normal' }: { token: Record<string, unknown>; size?: 'normal' | 'large' }) {
+  const symbol = String(token.symbol ?? '?').trim();
+  return <span class={`token-avatar ${size}`} aria-hidden="true"><b>{symbol.slice(0, 2).toUpperCase()}</b></span>;
+}
+
 export function TokenCard({ token }: { token: Record<string, unknown> }) {
   return <Link href={`/tokens/${token.address}`} class="token-card">
-    <div><strong>{String(token.symbol ?? 'Unknown')}</strong><span>{String(token.name ?? short(token.address))}</span></div>
+    <div class="token-card-head"><TokenAvatar token={token} /><div><strong>{String(token.symbol ?? 'Unknown')}</strong><span>{String(token.name ?? short(token.address))}</span></div><Icon name="arrow" /></div>
     <Badge tone={String(token.signal_state ?? token.state).toLowerCase()}>{String(token.signal_state ?? token.state ?? 'NO_SIGNAL')}</Badge>
-    <div class="token-metrics"><span>Score {displayDecimal(token.score)}</span><span>Confidence {displayDecimal(token.confidence)}</span><span>Progress {displayDecimal(token.curve_progress)}</span></div>
+    <div class="token-metrics"><span><small>Score</small>{displayDecimal(token.score)}</span><span><small>Confidence</small>{displayDecimal(token.confidence)}</span><span><small>Progress</small>{displayDecimal(token.curve_progress)}</span></div>
   </Link>;
 }
 

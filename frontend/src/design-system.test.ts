@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 const css = readFileSync(new URL('./style.css', import.meta.url), 'utf8');
+const pages = readFileSync(new URL('./pages.tsx', import.meta.url), 'utf8');
 
 describe('production design system', () => {
   it('defines the legible slate palette, typography, and responsive application shell', () => {
@@ -25,5 +26,24 @@ describe('production design system', () => {
   it('keeps the embedded interface independent of external style and font providers', () => {
     expect(css).not.toContain('@import');
     expect(css).not.toMatch(/url\(["']?https?:\/\//);
+  });
+
+  it('uses a focused dashboard without the low-value full live feed', () => {
+    expect(pages).toContain('class="dashboard-focus"');
+    expect(pages).toContain('Latest Pons V2 launches');
+    expect(pages).not.toContain('<Section title="Live Feed">');
+  });
+
+  it('uses scan-friendly token controls and icon-labelled table columns', () => {
+    expect(pages).toContain('class={`filter-chip ${smart ? \'active\' : \'\'}`}');
+    expect(pages).toContain('class="th-label"');
+    expect(css).toContain('.token-toolbar{');
+    expect(css).toContain('.progress-track{');
+  });
+
+  it('presents token identity and social destinations as a compact summary', () => {
+    expect(pages).toContain('class="token-hero"');
+    expect(pages).toContain('class="overview-layout"');
+    expect(pages).toContain('class="social-button"');
   });
 });
