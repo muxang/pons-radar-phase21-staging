@@ -37,6 +37,19 @@ export function safeExternalUrl(raw: unknown): string | null {
   } catch { return null; }
 }
 
+const IPFS_GATEWAY = (import.meta.env.VITE_IPFS_GATEWAY ?? 'https://ipfs.io/ipfs/').replace(/\/+$/, '');
+
+export function safeImageUrl(raw: unknown): string | null {
+  if (typeof raw !== 'string' || raw.length > 2048) return null;
+  const value = raw.trim();
+  if (/^ipfs:\/\//i.test(value)) {
+    const path = value.replace(/^ipfs:\/\/(?:ipfs\/)?/i, '').replace(/^\/+/, '');
+    if (!/^[a-zA-Z0-9][a-zA-Z0-9._~!$&'()*+,;=:@%/-]*$/.test(path)) return null;
+    return `${IPFS_GATEWAY}/${path}`;
+  }
+  return safeExternalUrl(value);
+}
+
 export function short(value: unknown, width = 10) {
   const text = String(value ?? '—');
   return text.length > width * 2 ? `${text.slice(0, width)}…${text.slice(-width)}` : text;

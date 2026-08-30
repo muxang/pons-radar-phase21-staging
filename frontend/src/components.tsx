@@ -1,5 +1,6 @@
 import type { ComponentChildren } from 'preact';
-import { displayDecimal, safeExternalUrl, short } from './api';
+import { useEffect, useRef, useState } from 'preact/hooks';
+import { displayDecimal, safeExternalUrl, safeImageUrl, short } from './api';
 import { Link } from './router';
 
 export function AsyncPanel<T>({ state, empty = 'No data', children }: { state: { data?: T; loading: boolean; error?: Error }; empty?: string; children: (data: T) => ComponentChildren }) {
@@ -15,9 +16,19 @@ export function Address({ value }: { value: unknown }) { const text = String(val
 export function ExternalLink({ value, label }: { value: unknown; label: string }) { const safe = safeExternalUrl(value); return safe ? <a href={safe} target="_blank" rel="noopener noreferrer">{label}</a> : <span class="unsafe" title={String(value ?? '')}>{value ? `${label} (unsafe URL)` : `${label}: unavailable`}</span>; }
 
 export function Icon({ name }: { name: string }) { return <span class={`ui-icon icon-${name}`} aria-hidden="true" />; }
-export function TokenAvatar({ token, size = 'normal' }: { token: Record<string, unknown>; size?: 'normal' | 'large' }) {
-  const logo = safeExternalUrl(token.logo_uri);
-  return <span class={`token-avatar ${size}`} aria-hidden="true"><Icon name="token" />{logo && <img src={logo} alt="" loading="lazy" referrerpolicy="no-referrer" onError={(event) => { event.currentTarget.hidden = true; }} />}</span>;
+export function TokenAvatar({ token, size = 'normal', priority = false }: { token: Record<string, unknown>; size?: 'normal' | 'large'; priority?: boolean }) {
+  const logo = safeImageUrl(token.logo_uri);
+  const [failed, setFailed] = useState(false);
+  const imageRef = useRef<HTMLImageElement>(null);
+  useEffect(() => {
+    setFailed(false);
+    if (!logo) return;
+    const timer = window.setTimeout(() => {
+      if (!imageRef.current?.complete) setFailed(true);
+    }, 8000);
+    return () => window.clearTimeout(timer);
+  }, [logo]);
+  return <span class={`token-avatar ${size}`} aria-hidden="true"><Icon name="token" />{logo && !failed && <img ref={imageRef} src={logo} alt="" width={size === 'large' ? 64 : 38} height={size === 'large' ? 64 : 38} loading={priority ? 'eager' : 'lazy'} fetchpriority={priority ? 'high' : 'auto'} decoding="async" referrerpolicy="no-referrer" onLoad={(event) => { event.currentTarget.classList.add('loaded'); }} onError={() => setFailed(true)} />}</span>;
 }
 
 export function TokenCard({ token }: { token: Record<string, unknown> }) {

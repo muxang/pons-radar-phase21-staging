@@ -21,7 +21,9 @@ describe('production design system', () => {
 
   it('uses a consistent embedded icon set without external icon dependencies', () => {
     expect(css).toContain('.sidebar nav a:nth-child(1):before{mask-image:url("data:image/svg+xml');
-    expect(css).toContain('.sidebar nav a:nth-child(8):before{mask-image:url("data:image/svg+xml');
+    expect(css).toContain('.sidebar nav a:nth-child(8):before{--icon-mask:url("data:image/svg+xml');
+    expect(css).not.toContain('-webkit-mask-image:inherit');
+    expect(css).toContain('-webkit-mask-image:var(--icon-mask)');
   });
 
   it('keeps the embedded interface independent of external style and font providers', () => {
@@ -48,5 +50,7 @@ describe('production design system', () => {
     expect(pages).toContain('class="overview-layout"');
     expect(pages).toContain('class="social-button"');
     expect(components).toContain('token.logo_uri');
+    expect(components).toContain('safeImageUrl(token.logo_uri)');
+    expect(components).toContain('decoding="async"');
   });
 });
